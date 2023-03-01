@@ -42,9 +42,14 @@ pred wellformed[s: State] {
     }
   }
 
-  // honeycombs must be a nonnegative int away TODO no duplicates
+  // honeycombs must be a nonnegative int away
   all comb: Honeycomb | {
-    s.combs[comb] >= 0
+    some s.combs[comb] implies s.combs[comb] >= 0
+  }
+
+  // any two honeycombs cannot be the same distance away
+  all disj comb1, comb2: Honeycomb | {
+    some s.combs[comb1] implies s.combs[comb1] != s.combs[comb2]
   }
 
   // there must be exactly (number current players) - 1 honeycombs for every state
@@ -138,7 +143,7 @@ pred move[curr: State, next: State, moveBy: Int] {
     (some comb: Honeycomb | curr.combs[comb] = 0) implies {
       all comb: Honeycomb | {
         // all combs except the eliminating one are moved forward by 1
-        curr.combs[comb] != 0 implies {
+        (some curr.combs[comb]) and (curr.combs[comb] != 0) implies {
           next.combs[comb] = subtract[curr.combs[comb], 1]
         } 
       }
@@ -206,6 +211,46 @@ pred traces {
 }
 
 // TODO - linearity -- can a final state exist that is not reachable from every other state
-run {traces} for exactly 3 Player, 8 State
+run {traces} for exactly 5 Player, exactly 6 State, 6 Int
 
 //TODO -- only works for two players... what's wrong with three?
+
+
+/*
+example a is {(all s: State | wellformed[s]) and (some s1,s2: State | init[s1] and final[s2])} for {
+  Honeycomb = `H1 + `H2
+  Player = `P1 + `P2 + `P3
+  State = `S0 + `S1
+  players = `S0 -> `P1 -> `P2
+          + `S0 -> `P2 -> `P3
+          + `S0 -> `P3 -> `P1
+          + `S1 -> `P1 -> `P1
+  eliminated = `S1 -> `P2 + `S1 -> `P3
+  combs = `S0 -> `H1 -> 1
+        + `S0 -> `H2 -> 2
+  currPlayer = `S0 -> `P1
+             + `S1 -> `P1
+  nextState = `S0 -> `S1
+}
+*/
+
+example a is {traces} for {
+  Honeycomb = `H1 + `H2
+  Player = `P1 + `P2 + `P3
+  State = `S1 + `S2 + `S3
+  players = `S1 -> `P1 -> `P2
+          + `S1 -> `P2 -> `P3
+          + `S1 -> `P3 -> `P1
+          + `S2 -> `P1 -> `P2
+          + `S2 -> `P2 -> `P1
+          + `S3 -> `P2 -> `P2
+  eliminated = `S2 -> `P3 + `S3 -> `P3 + `S3 -> `P1
+  combs = `S1 -> `H1 -> 0
+        + `S1 -> `H2 -> 1
+        + `S2 -> `H2 -> 0
+  currPlayer = `S1 -> `P3
+             + `S2 -> `P1
+             + `S3 -> `P2
+  nextState = `S1 -> `S2 + `S2 -> `S3
+}
+
