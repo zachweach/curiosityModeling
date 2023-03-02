@@ -210,11 +210,7 @@ pred traces {
   all s1, s2: State | s2 = s1.nextState implies move[s1, s2, 1] or move[s1, s2, 2]
 }
 
-// TODO - linearity -- can a final state exist that is not reachable from every other state
 run {traces} for exactly 5 Player, exactly 6 State, 6 Int
-
-//TODO -- only works for two players... what's wrong with three?
-
 
 /*
 example a is {(all s: State | wellformed[s]) and (some s1,s2: State | init[s1] and final[s2])} for {
