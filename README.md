@@ -10,14 +10,25 @@
 ### Checks and run statements
 We wrote examples and counterexamples for all our predicates to verify that they operate as expected. Additionally, we wrote inductive reasoning to show that wellformedness is preserved by the move predicate. A full explanation of each test is documented in our test file.
 
-// TODO: run statements
-We have various run statements with varying amounts of players and states.
+We have various run statements with varying amounts of players and states. There is one for a game with two players, one with three players, and one with five players. There is one other run statement that forces the honeycombs to start 7 and 15 moves away, which can take a while to run and is described below.
 
 ### What to expect in the Sterling visualizer
+The default Sterling visualizer produces a graph representing the entire game, with each state of the game connected in order by their `nextState`. Each state shows the turn order for that state (which includes only the players still in the game), the players that have been eliminated in the state, the player who is currently picking fruit, and the distance of all of the honeycombs. There is also a custom visualization which shows the same information, described in detail below.
 
 ### How to interpret an instance created by the spec
+An instance, assuming it satisfies `traces`, represents a complete and valid game of Honeycomb Havoc!. The instance will have a sequence of `State`s that represent the game progressing, where each state represents a player taking either one or two fruit from the tree. If a player is eliminated between states (because they take a honeycomb from the tree), they will be removed form the turn order, and move to the set of eliminated players, also removing the honeycomb’s distance from the state. The state shown in the image in the description above would be represented like this:
+* Waluigi is the only player in the eliminated set
+* The players turn order is Mario -> Luigi -> Wario -> Mario -> …
+* The honeycombs are at distances of 1 and 11
+* The current player is Mario
 
-### Custom visualization (?)
+In the next state, assuming Mario takes one fruit:
+* Waliugi will remain the only player eliminated
+* The turn order remains the same
+* The honeycombs are now at distances 0 and 10
+* The current player is Luigi
+
+### Custom visualization
 A custom visualizer is included (`hhVisualizer.js`) which can be used to better visualize an instance in Sterling using the `</> Script` tab. This visualizer is simple and text-based, but allows the data of an instance to be understood in a turn-based way. Each state is shown in order, from left-to-right then top-to-bottom. Each state shows the current player and how many fruit they took, the distance of each honeycomb, and the next players in the turn order. An example of a simple game in the default visualizer and the custom visualization is shown here:
 
 ![Default visualization of a basic game](/hh-default-simple.png)
