@@ -74,6 +74,12 @@ pred init[s: State] {
 
   // there are (total number of players) - 1 honeycombs
   #{s.combs} = subtract[#{Player}, 1]
+  all disj comb1, comb2: Honeycomb | {
+    some s.combs[comb1] implies s.combs[comb1] != s.combs[comb2]
+  }
+  all comb: Honeycomb | {
+    some s.combs[comb] implies s.combs[comb] >= 0
+  }
 
   // is not the "nextState" of any state
   // also disallows a "one state" cycle
@@ -100,7 +106,7 @@ pred final[s: State] {
   #{s.eliminated} = subtract[#{Player}, 1]
   s.players[s.currPlayer] = s.currPlayer
 
-  //there is no next state
+  // there is no next state
   no s.nextState
 }
 
@@ -132,12 +138,19 @@ pred move[curr: State, next: State, moveBy: Int] {
   // player's successor becomes the player in the next state
   next.currPlayer = curr.players[curr.currPlayer]
 
+  // can only take 1 or 2 fruit in a turn
   moveBy = 1 or moveBy = 2
+
+  // next state has some well-formedness
+  next.nextState != next
+  all p: Player | {
+    p in next.eliminated implies no next.players[p] else some next.players[p]
+  }
 
   // ACTION
   // if the current player is eliminated
   currPlayerEliminated[curr, moveBy] implies {
-    curr.currPlayer in next.eliminated // player is actually eliminated
+    curr.eliminated + curr.currPlayer = next.eliminated // player is actually eliminated
     #{next.combs} = subtract[#{curr.combs}, 1] // a honeycomb is removed
     // if the eliminating honeycomb was at position 0, all other honeycombs move forward by exactly 1
     (some comb: Honeycomb | curr.combs[comb] = 0) implies {
@@ -174,14 +187,15 @@ pred move[curr: State, next: State, moveBy: Int] {
   } else { // no one is eliminated
     curr.eliminated = next.eliminated // no one new is eliminated
     #{next.combs} = #{curr.combs} // no honeycombs are removed
+    all comb: Honeycomb | some curr.combs[comb] implies some next.combs[comb]
     // combs move forward by 1 or 2
     moveBy = 1 implies {
       all comb: Honeycomb | {
-        next.combs[comb] = subtract[curr.combs[comb], 1]
+        (some next.combs[comb]) implies next.combs[comb] = subtract[curr.combs[comb], 1]
       }
     } else {
       all comb: Honeycomb | {
-        next.combs[comb] = subtract[curr.combs[comb], 2]
+        (some next.combs[comb]) implies next.combs[comb] = subtract[curr.combs[comb], 2]
       }
     }
 
@@ -210,43 +224,18 @@ pred traces {
   all s1, s2: State | s2 = s1.nextState implies move[s1, s2, 1] or move[s1, s2, 2]
 }
 
-run {traces} for exactly 5 Player, exactly 6 State, 6 Int
-
-/*
-example a is {(all s: State | wellformed[s]) and (some s1,s2: State | init[s1] and final[s2])} for {
-  Honeycomb = `H1 + `H2
-  Player = `P1 + `P2 + `P3
-  State = `S0 + `S1
-  players = `S0 -> `P1 -> `P2
-          + `S0 -> `P2 -> `P3
-          + `S0 -> `P3 -> `P1
-          + `S1 -> `P1 -> `P1
-  eliminated = `S1 -> `P2 + `S1 -> `P3
-  combs = `S0 -> `H1 -> 1
-        + `S0 -> `H2 -> 2
-  currPlayer = `S0 -> `P1
-             + `S1 -> `P1
-  nextState = `S0 -> `S1
-}
-*/
-
-example a is {traces} for {
-  Honeycomb = `H1 + `H2
-  Player = `P1 + `P2 + `P3
-  State = `S1 + `S2 + `S3
-  players = `S1 -> `P1 -> `P2
-          + `S1 -> `P2 -> `P3
-          + `S1 -> `P3 -> `P1
-          + `S2 -> `P1 -> `P2
-          + `S2 -> `P2 -> `P1
-          + `S3 -> `P2 -> `P2
-  eliminated = `S2 -> `P3 + `S3 -> `P3 + `S3 -> `P1
-  combs = `S1 -> `H1 -> 0
-        + `S1 -> `H2 -> 1
-        + `S2 -> `H2 -> 0
-  currPlayer = `S1 -> `P3
-             + `S2 -> `P1
-             + `S3 -> `P2
-  nextState = `S1 -> `S2 + `S2 -> `S3
-}
+// run {traces} for exactly 2 Player
+// run {traces} for exactly 3 Player
+// this next one takes a long time to run, but does work. I'd advise not running it,
+// but an instance it produces is linked in the README
+// run {
+//   traces
+//   some s: State | {
+//     init[s]
+//     // the honeycombs exist at 7 and 15 moves away (a realistic game)
+//     some h: Honeycomb | s.combs[h] = 7
+//     some h: Honeycomb | s.combs[h] = 15
+//   }
+// } for exactly 3 Player, exactly 16 State, 5 Int
+run {traces} for exactly 5 Player, 8 State
 
